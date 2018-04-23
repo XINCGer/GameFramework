@@ -1,6 +1,6 @@
 ﻿//------------------------------------------------------------
 // Game Framework v3.x
-// Copyright © 2013-2017 Jiang Yin. All rights reserved.
+// Copyright © 2013-2018 Jiang Yin. All rights reserved.
 // Homepage: http://gameframework.cn/
 // Feedback: mailto:jiangyin@gameframework.cn
 //------------------------------------------------------------
@@ -11,15 +11,25 @@ namespace GameFramework.Entity
     {
         private sealed class ShowEntityInfo
         {
+            private readonly int m_SerialId;
             private readonly int m_EntityId;
             private readonly EntityGroup m_EntityGroup;
             private readonly object m_UserData;
 
-            public ShowEntityInfo(int entityId, EntityGroup entityGroup, object userData)
+            public ShowEntityInfo(int serialId, int entityId, EntityGroup entityGroup, object userData)
             {
+                m_SerialId = serialId;
                 m_EntityId = entityId;
                 m_EntityGroup = entityGroup;
                 m_UserData = userData;
+            }
+
+            public int SerialId
+            {
+                get
+                {
+                    return m_SerialId;
+                }
             }
 
             public int EntityId

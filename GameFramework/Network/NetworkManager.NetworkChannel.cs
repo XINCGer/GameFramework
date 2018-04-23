@@ -1,6 +1,6 @@
 ﻿//------------------------------------------------------------
 // Game Framework v3.x
-// Copyright © 2013-2017 Jiang Yin. All rights reserved.
+// Copyright © 2013-2018 Jiang Yin. All rights reserved.
 // Homepage: http://gameframework.cn/
 // Feedback: mailto:jiangyin@gameframework.cn
 //------------------------------------------------------------
@@ -417,29 +417,32 @@ namespace GameFramework.Network
             /// </summary>
             public void Close()
             {
-                if (m_Socket == null)
+                lock (this)
                 {
-                    return;
-                }
-
-                m_EventPool.Clear();
-
-                m_Active = false;
-                try
-                {
-                    m_Socket.Shutdown(SocketShutdown.Both);
-                }
-                catch
-                {
-                }
-                finally
-                {
-                    m_Socket.Close();
-                    m_Socket = null;
-
-                    if (NetworkChannelClosed != null)
+                    if (m_Socket == null)
                     {
-                        NetworkChannelClosed(this);
+                        return;
+                    }
+
+                    m_EventPool.Clear();
+
+                    m_Active = false;
+                    try
+                    {
+                        m_Socket.Shutdown(SocketShutdown.Both);
+                    }
+                    catch
+                    {
+                    }
+                    finally
+                    {
+                        m_Socket.Close();
+                        m_Socket = null;
+
+                        if (NetworkChannelClosed != null)
+                        {
+                            NetworkChannelClosed(this);
+                        }
                     }
                 }
             }
