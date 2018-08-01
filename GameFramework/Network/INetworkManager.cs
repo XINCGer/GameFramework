@@ -6,6 +6,7 @@
 //------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 
 namespace GameFramework.Network
 {
@@ -31,11 +32,6 @@ namespace GameFramework.Network
         /// 网络连接关闭事件。
         /// </summary>
         event EventHandler<NetworkClosedEventArgs> NetworkClosed;
-
-        /// <summary>
-        /// 发送网络消息包事件。
-        /// </summary>
-        event EventHandler<NetworkSendPacketEventArgs> NetworkSendPacket;
 
         /// <summary>
         /// 网络心跳包丢失事件。
@@ -71,6 +67,12 @@ namespace GameFramework.Network
         /// </summary>
         /// <returns>所有网络频道。</returns>
         INetworkChannel[] GetAllNetworkChannels();
+
+        /// <summary>
+        /// 获取所有网络频道。
+        /// </summary>
+        /// <param name="results">所有网络频道。</param>
+        void GetAllNetworkChannels(List<INetworkChannel> results);
 
         /// <summary>
         /// 创建网络频道。

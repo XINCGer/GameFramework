@@ -220,6 +220,21 @@ namespace GameFramework.Scene
         }
 
         /// <summary>
+        /// 获取已加载场景的资源名称。
+        /// </summary>
+        /// <param name="results">已加载场景的资源名称。</param>
+        public void GetLoadedSceneAssetNames(List<string> results)
+        {
+            if (results == null)
+            {
+                throw new GameFrameworkException("Results is invalid.");
+            }
+
+            results.Clear();
+            results.AddRange(m_LoadedSceneAssetNames);
+        }
+
+        /// <summary>
         /// 获取场景是否正在加载。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
@@ -241,6 +256,21 @@ namespace GameFramework.Scene
         public string[] GetLoadingSceneAssetNames()
         {
             return m_LoadingSceneAssetNames.ToArray();
+        }
+
+        /// <summary>
+        /// 获取正在加载场景的资源名称。
+        /// </summary>
+        /// <param name="results">正在加载场景的资源名称。</param>
+        public void GetLoadingSceneAssetNames(List<string> results)
+        {
+            if (results == null)
+            {
+                throw new GameFrameworkException("Results is invalid.");
+            }
+
+            results.Clear();
+            results.AddRange(m_LoadingSceneAssetNames);
         }
 
         /// <summary>
@@ -268,12 +298,37 @@ namespace GameFramework.Scene
         }
 
         /// <summary>
+        /// 获取正在卸载场景的资源名称。
+        /// </summary>
+        /// <param name="results">正在卸载场景的资源名称。</param>
+        public void GetUnloadingSceneAssetNames(List<string> results)
+        {
+            if (results == null)
+            {
+                throw new GameFrameworkException("Results is invalid.");
+            }
+
+            results.Clear();
+            results.AddRange(m_UnloadingSceneAssetNames);
+        }
+
+        /// <summary>
         /// 加载场景。
         /// </summary>
         /// <param name="sceneAssetName">场景资源名称。</param>
         public void LoadScene(string sceneAssetName)
         {
-            LoadScene(sceneAssetName, null);
+            LoadScene(sceneAssetName, Constant.DefaultPriority, null);
+        }
+
+        /// <summary>
+        /// 加载场景。
+        /// </summary>
+        /// <param name="sceneAssetName">场景资源名称。</param>
+        /// <param name="priority">加载场景资源的优先级。</param>
+        public void LoadScene(string sceneAssetName, int priority)
+        {
+            LoadScene(sceneAssetName, priority, null);
         }
 
         /// <summary>
@@ -282,6 +337,17 @@ namespace GameFramework.Scene
         /// <param name="sceneAssetName">场景资源名称。</param>
         /// <param name="userData">用户自定义数据。</param>
         public void LoadScene(string sceneAssetName, object userData)
+        {
+            LoadScene(sceneAssetName, Constant.DefaultPriority, userData);
+        }
+
+        /// <summary>
+        /// 加载场景。
+        /// </summary>
+        /// <param name="sceneAssetName">场景资源名称。</param>
+        /// <param name="priority">加载场景资源的优先级。</param>
+        /// <param name="userData">用户自定义数据。</param>
+        public void LoadScene(string sceneAssetName, int priority, object userData)
         {
             if (string.IsNullOrEmpty(sceneAssetName))
             {
@@ -309,7 +375,7 @@ namespace GameFramework.Scene
             }
 
             m_LoadingSceneAssetNames.Add(sceneAssetName);
-            m_ResourceManager.LoadScene(sceneAssetName, m_LoadSceneCallbacks, userData);
+            m_ResourceManager.LoadScene(sceneAssetName, priority, m_LoadSceneCallbacks, userData);
         }
 
         /// <summary>

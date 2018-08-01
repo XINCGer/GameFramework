@@ -5,6 +5,8 @@
 // Feedback: mailto:jiangyin@gameframework.cn
 //------------------------------------------------------------
 
+using System.Collections.Generic;
+
 namespace GameFramework.UI
 {
     /// <summary>
@@ -24,6 +26,15 @@ namespace GameFramework.UI
         /// 获取或设置界面组深度。
         /// </summary>
         int Depth
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// 获取或设置界面组是否暂停。
+        /// </summary>
+        bool Pause
         {
             get;
             set;
@@ -89,9 +100,22 @@ namespace GameFramework.UI
         IUIForm[] GetUIForms(string uiFormAssetName);
 
         /// <summary>
+        /// 从界面组中获取界面。
+        /// </summary>
+        /// <param name="uiFormAssetName">界面资源名称。</param>
+        /// <param name="results">要获取的界面。</param>
+        void GetUIForms(string uiFormAssetName, List<IUIForm> results);
+
+        /// <summary>
         /// 从界面组中获取所有界面。
         /// </summary>
         /// <returns>界面组中的所有界面。</returns>
         IUIForm[] GetAllUIForms();
+
+        /// <summary>
+        /// 从界面组中获取所有界面。
+        /// </summary>
+        /// <param name="results">界面组中的所有界面。</param>
+        void GetAllUIForms(List<IUIForm> results);
     }
 }

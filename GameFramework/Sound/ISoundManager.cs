@@ -7,6 +7,7 @@
 
 using GameFramework.Resource;
 using System;
+using System.Collections.Generic;
 
 namespace GameFramework.Sound
 {
@@ -76,6 +77,12 @@ namespace GameFramework.Sound
         ISoundGroup[] GetAllSoundGroups();
 
         /// <summary>
+        /// 获取所有声音组。
+        /// </summary>
+        /// <param name="results">所有声音组。</param>
+        void GetAllSoundGroups(List<ISoundGroup> results);
+
+        /// <summary>
         /// 增加声音组。
         /// </summary>
         /// <param name="soundGroupName">声音组名称。</param>
@@ -108,6 +115,12 @@ namespace GameFramework.Sound
         int[] GetAllLoadingSoundSerialIds();
 
         /// <summary>
+        /// 获取所有正在加载声音的序列编号。
+        /// </summary>
+        /// <param name="results">所有正在加载声音的序列编号。</param>
+        void GetAllLoadingSoundSerialIds(List<int> results);
+
+        /// <summary>
         /// 是否正在加载声音。
         /// </summary>
         /// <param name="serialId">声音序列编号。</param>
@@ -121,6 +134,15 @@ namespace GameFramework.Sound
         /// <param name="soundGroupName">声音组名称。</param>
         /// <returns>声音的序列编号。</returns>
         int PlaySound(string soundAssetName, string soundGroupName);
+
+        /// <summary>
+        /// 播放声音。
+        /// </summary>
+        /// <param name="soundAssetName">声音资源名称。</param>
+        /// <param name="soundGroupName">声音组名称。</param>
+        /// <param name="priority">加载声音资源的优先级。</param>
+        /// <returns>声音的序列编号。</returns>
+        int PlaySound(string soundAssetName, string soundGroupName, int priority);
 
         /// <summary>
         /// 播放声音。
@@ -145,10 +167,41 @@ namespace GameFramework.Sound
         /// </summary>
         /// <param name="soundAssetName">声音资源名称。</param>
         /// <param name="soundGroupName">声音组名称。</param>
+        /// <param name="priority">加载声音资源的优先级。</param>
+        /// <param name="playSoundParams">播放声音参数。</param>
+        /// <returns>声音的序列编号。</returns>
+        int PlaySound(string soundAssetName, string soundGroupName, int priority, PlaySoundParams playSoundParams);
+
+        /// <summary>
+        /// 播放声音。
+        /// </summary>
+        /// <param name="soundAssetName">声音资源名称。</param>
+        /// <param name="soundGroupName">声音组名称。</param>
+        /// <param name="priority">加载声音资源的优先级。</param>
+        /// <param name="userData">用户自定义数据。</param>
+        /// <returns>声音的序列编号。</returns>
+        int PlaySound(string soundAssetName, string soundGroupName, int priority, object userData);
+
+        /// <summary>
+        /// 播放声音。
+        /// </summary>
+        /// <param name="soundAssetName">声音资源名称。</param>
+        /// <param name="soundGroupName">声音组名称。</param>
         /// <param name="playSoundParams">播放声音参数。</param>
         /// <param name="userData">用户自定义数据。</param>
         /// <returns>声音的序列编号。</returns>
         int PlaySound(string soundAssetName, string soundGroupName, PlaySoundParams playSoundParams, object userData);
+
+        /// <summary>
+        /// 播放声音。
+        /// </summary>
+        /// <param name="soundAssetName">声音资源名称。</param>
+        /// <param name="soundGroupName">声音组名称。</param>
+        /// <param name="priority">加载声音资源的优先级。</param>
+        /// <param name="playSoundParams">播放声音参数。</param>
+        /// <param name="userData">用户自定义数据。</param>
+        /// <returns>声音的序列编号。</returns>
+        int PlaySound(string soundAssetName, string soundGroupName, int priority, PlaySoundParams playSoundParams, object userData);
 
         /// <summary>
         /// 停止播放声音。

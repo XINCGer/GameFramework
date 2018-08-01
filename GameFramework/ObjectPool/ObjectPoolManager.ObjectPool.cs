@@ -31,15 +31,16 @@ namespace GameFramework.ObjectPool
             /// </summary>
             /// <param name="name">对象池名称。</param>
             /// <param name="allowMultiSpawn">是否允许对象被多次获取。</param>
+            /// <param name="autoReleaseInterval">对象池自动释放可释放对象的间隔秒数。</param>
             /// <param name="capacity">对象池的容量。</param>
             /// <param name="expireTime">对象池对象过期秒数。</param>
             /// <param name="priority">对象池的优先级。</param>
-            public ObjectPool(string name, bool allowMultiSpawn, int capacity, float expireTime, int priority)
+            public ObjectPool(string name, bool allowMultiSpawn, float autoReleaseInterval, int capacity, float expireTime, int priority)
                 : base(name)
             {
                 m_Objects = new LinkedList<Object<T>>();
                 m_AllowMultiSpawn = allowMultiSpawn;
-                m_AutoReleaseInterval = expireTime;
+                m_AutoReleaseInterval = autoReleaseInterval;
                 Capacity = capacity;
                 ExpireTime = expireTime;
                 m_Priority = priority;
@@ -450,7 +451,7 @@ namespace GameFramework.ObjectPool
                         }
 
                         m_Objects.Remove(obj);
-                        obj.Release();
+                        obj.Release(false);
                         Log.Debug("Object pool '{0}' release '{1}'.", Utility.Text.GetFullName<T>(Name), toReleaseObject.Name);
                         found = true;
                         break;
@@ -471,7 +472,7 @@ namespace GameFramework.ObjectPool
                 LinkedListNode<Object<T>> current = m_Objects.First;
                 while (current != null)
                 {
-                    if (current.Value.IsInUse || current.Value.Locked)
+                    if (current.Value.IsInUse || current.Value.Locked || !current.Value.CustomCanReleaseFlag)
                     {
                         current = current.Next;
                         continue;
@@ -479,7 +480,7 @@ namespace GameFramework.ObjectPool
 
                     LinkedListNode<Object<T>> next = current.Next;
                     m_Objects.Remove(current);
-                    current.Value.Release();
+                    current.Value.Release(false);
                     Log.Debug("Object pool '{0}' release '{1}'.", Utility.Text.GetFullName<T>(Name), current.Value.Name);
                     current = next;
                 }
@@ -492,13 +493,13 @@ namespace GameFramework.ObjectPool
             public override ObjectInfo[] GetAllObjectInfos()
             {
                 int index = 0;
-                ObjectInfo[] objectInfos = new ObjectInfo[m_Objects.Count];
+                ObjectInfo[] results = new ObjectInfo[m_Objects.Count];
                 foreach (Object<T> obj in m_Objects)
                 {
-                    objectInfos[index++] = new ObjectInfo(obj.Name, obj.Locked, obj.Priority, obj.LastUseTime, obj.SpawnCount);
+                    results[index++] = new ObjectInfo(obj.Name, obj.Locked, obj.Priority, obj.LastUseTime, obj.SpawnCount);
                 }
 
-                return objectInfos;
+                return results;
             }
 
             internal override void Update(float elapseSeconds, float realElapseSeconds)
@@ -521,7 +522,7 @@ namespace GameFramework.ObjectPool
                 {
                     LinkedListNode<Object<T>> next = current.Next;
                     m_Objects.Remove(current);
-                    current.Value.Release();
+                    current.Value.Release(true);
                     Log.Debug("Object pool '{0}' release '{1}'.", Utility.Text.GetFullName<T>(Name), current.Value.Name);
                     current = next;
                 }
@@ -533,7 +534,7 @@ namespace GameFramework.ObjectPool
 
                 foreach (Object<T> obj in m_Objects)
                 {
-                    if (obj.IsInUse || obj.Locked)
+                    if (obj.IsInUse || obj.Locked || !obj.CustomCanReleaseFlag)
                     {
                         continue;
                     }

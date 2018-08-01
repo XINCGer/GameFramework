@@ -168,7 +168,17 @@ namespace GameFramework.DataTable
         /// <param name="dataTableAssetName">数据表资源名称。</param>
         public void LoadDataTable(string dataTableAssetName)
         {
-            LoadDataTable(dataTableAssetName, null);
+            LoadDataTable(dataTableAssetName, Constant.DefaultPriority, null);
+        }
+
+        /// <summary>
+        /// 加载数据表。
+        /// </summary>
+        /// <param name="dataTableAssetName">数据表资源名称。</param>
+        /// <param name="priority">加载数据表资源的优先级。</param>
+        public void LoadDataTable(string dataTableAssetName, int priority)
+        {
+            LoadDataTable(dataTableAssetName, priority, null);
         }
 
         /// <summary>
@@ -177,6 +187,17 @@ namespace GameFramework.DataTable
         /// <param name="dataTableAssetName">数据表资源名称。</param>
         /// <param name="userData">用户自定义数据。</param>
         public void LoadDataTable(string dataTableAssetName, object userData)
+        {
+            LoadDataTable(dataTableAssetName, Constant.DefaultPriority, userData);
+        }
+
+        /// <summary>
+        /// 加载数据表。
+        /// </summary>
+        /// <param name="dataTableAssetName">数据表资源名称。</param>
+        /// <param name="priority">加载数据表资源的优先级。</param>
+        /// <param name="userData">用户自定义数据。</param>
+        public void LoadDataTable(string dataTableAssetName, int priority, object userData)
         {
             if (m_ResourceManager == null)
             {
@@ -188,7 +209,7 @@ namespace GameFramework.DataTable
                 throw new GameFrameworkException("You must set data table helper first.");
             }
 
-            m_ResourceManager.LoadAsset(dataTableAssetName, m_LoadAssetCallbacks, userData);
+            m_ResourceManager.LoadAsset(dataTableAssetName, priority, m_LoadAssetCallbacks, userData);
         }
 
         /// <summary>
@@ -322,13 +343,31 @@ namespace GameFramework.DataTable
         public DataTableBase[] GetAllDataTables()
         {
             int index = 0;
-            DataTableBase[] dataTables = new DataTableBase[m_DataTables.Count];
+            DataTableBase[] results = new DataTableBase[m_DataTables.Count];
             foreach (KeyValuePair<string, DataTableBase> dataTable in m_DataTables)
             {
-                dataTables[index++] = dataTable.Value;
+                results[index++] = dataTable.Value;
             }
 
-            return dataTables;
+            return results;
+        }
+
+        /// <summary>
+        /// 获取所有数据表。
+        /// </summary>
+        /// <param name="results">所有数据表。</param>
+        public void GetAllDataTables(List<DataTableBase> results)
+        {
+            if (results == null)
+            {
+                throw new GameFrameworkException("Results is invalid.");
+            }
+
+            results.Clear();
+            foreach (KeyValuePair<string, DataTableBase> dataTable in m_DataTables)
+            {
+                results.Add(dataTable.Value);
+            }
         }
 
         /// <summary>
