@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 using GameFramework.Resource;
@@ -157,7 +157,6 @@ namespace GameFramework.Localization
         /// <param name="realElapseSeconds">真实流逝时间，以秒为单位。</param>
         internal override void Update(float elapseSeconds, float realElapseSeconds)
         {
-
         }
 
         /// <summary>
@@ -165,7 +164,6 @@ namespace GameFramework.Localization
         /// </summary>
         internal override void Shutdown()
         {
-
         }
 
         /// <summary>
@@ -247,7 +245,7 @@ namespace GameFramework.Localization
                 throw new GameFrameworkException("You must set localization helper first.");
             }
 
-            m_ResourceManager.LoadAsset(dictionaryAssetName, priority, m_LoadAssetCallbacks, new LoadDictionaryInfo(loadType, userData));
+            m_ResourceManager.LoadAsset(dictionaryAssetName, priority, m_LoadAssetCallbacks, LoadDictionaryInfo.Create(loadType, userData));
         }
 
         /// <summary>
@@ -410,7 +408,7 @@ namespace GameFramework.Localization
             }
             catch (Exception exception)
             {
-                return Utility.Text.Format("<Error>{0},{1},{2},{3}", key, value, arg0, exception.Message);
+                return Utility.Text.Format("<Error>{0},{1},{2},{3}", key, value, arg0, exception.ToString());
             }
         }
 
@@ -440,7 +438,7 @@ namespace GameFramework.Localization
             }
             catch (Exception exception)
             {
-                return Utility.Text.Format("<Error>{0},{1},{2},{3},{4}", key, value, arg0, arg1, exception.Message);
+                return Utility.Text.Format("<Error>{0},{1},{2},{3},{4}", key, value, arg0, arg1, exception.ToString());
             }
         }
 
@@ -471,7 +469,7 @@ namespace GameFramework.Localization
             }
             catch (Exception exception)
             {
-                return Utility.Text.Format("<Error>{0},{1},{2},{3},{4},{5}", key, value, arg0, arg1, arg2, exception.Message);
+                return Utility.Text.Format("<Error>{0},{1},{2},{3},{4},{5}", key, value, arg0, arg1, arg2, exception.ToString());
             }
         }
 
@@ -509,7 +507,7 @@ namespace GameFramework.Localization
                     }
                 }
 
-                errorString += "," + exception.Message;
+                errorString += "," + exception.ToString();
                 return errorString;
             }
         }
@@ -596,12 +594,21 @@ namespace GameFramework.Localization
                 {
                     throw new GameFrameworkException(Utility.Text.Format("Load dictionary failure in helper, asset name '{0}'.", dictionaryAssetName));
                 }
+
+                if (m_LoadDictionarySuccessEventHandler != null)
+                {
+                    LoadDictionarySuccessEventArgs loadDictionarySuccessEventArgs = LoadDictionarySuccessEventArgs.Create(dictionaryAssetName, loadDictionaryInfo.LoadType, duration, loadDictionaryInfo.UserData);
+                    m_LoadDictionarySuccessEventHandler(this, loadDictionarySuccessEventArgs);
+                    ReferencePool.Release(loadDictionarySuccessEventArgs);
+                }
             }
             catch (Exception exception)
             {
                 if (m_LoadDictionaryFailureEventHandler != null)
                 {
-                    m_LoadDictionaryFailureEventHandler(this, new LoadDictionaryFailureEventArgs(dictionaryAssetName, exception.ToString(), loadDictionaryInfo.UserData));
+                    LoadDictionaryFailureEventArgs loadDictionaryFailureEventArgs = LoadDictionaryFailureEventArgs.Create(dictionaryAssetName, loadDictionaryInfo.LoadType, exception.ToString(), loadDictionaryInfo.UserData);
+                    m_LoadDictionaryFailureEventHandler(this, loadDictionaryFailureEventArgs);
+                    ReferencePool.Release(loadDictionaryFailureEventArgs);
                     return;
                 }
 
@@ -609,12 +616,8 @@ namespace GameFramework.Localization
             }
             finally
             {
+                ReferencePool.Release(loadDictionaryInfo);
                 m_LocalizationHelper.ReleaseDictionaryAsset(dictionaryAsset);
-            }
-
-            if (m_LoadDictionarySuccessEventHandler != null)
-            {
-                m_LoadDictionarySuccessEventHandler(this, new LoadDictionarySuccessEventArgs(dictionaryAssetName, duration, loadDictionaryInfo.UserData));
             }
         }
 
@@ -629,7 +632,9 @@ namespace GameFramework.Localization
             string appendErrorMessage = Utility.Text.Format("Load dictionary failure, asset name '{0}', status '{1}', error message '{2}'.", dictionaryAssetName, status.ToString(), errorMessage);
             if (m_LoadDictionaryFailureEventHandler != null)
             {
-                m_LoadDictionaryFailureEventHandler(this, new LoadDictionaryFailureEventArgs(dictionaryAssetName, appendErrorMessage, loadDictionaryInfo.UserData));
+                LoadDictionaryFailureEventArgs loadDictionaryFailureEventArgs = LoadDictionaryFailureEventArgs.Create(dictionaryAssetName, loadDictionaryInfo.LoadType, appendErrorMessage, loadDictionaryInfo.UserData);
+                m_LoadDictionaryFailureEventHandler(this, loadDictionaryFailureEventArgs);
+                ReferencePool.Release(loadDictionaryFailureEventArgs);
                 return;
             }
 
@@ -646,7 +651,9 @@ namespace GameFramework.Localization
 
             if (m_LoadDictionaryUpdateEventHandler != null)
             {
-                m_LoadDictionaryUpdateEventHandler(this, new LoadDictionaryUpdateEventArgs(dictionaryAssetName, progress, loadDictionaryInfo.UserData));
+                LoadDictionaryUpdateEventArgs loadDictionaryUpdateEventArgs = LoadDictionaryUpdateEventArgs.Create(dictionaryAssetName, loadDictionaryInfo.LoadType, progress, loadDictionaryInfo.UserData);
+                m_LoadDictionaryUpdateEventHandler(this, loadDictionaryUpdateEventArgs);
+                ReferencePool.Release(loadDictionaryUpdateEventArgs);
             }
         }
 
@@ -660,7 +667,9 @@ namespace GameFramework.Localization
 
             if (m_LoadDictionaryDependencyAssetEventHandler != null)
             {
-                m_LoadDictionaryDependencyAssetEventHandler(this, new LoadDictionaryDependencyAssetEventArgs(dictionaryAssetName, dependencyAssetName, loadedCount, totalCount, loadDictionaryInfo.UserData));
+                LoadDictionaryDependencyAssetEventArgs loadDictionaryDependencyAssetEventArgs = LoadDictionaryDependencyAssetEventArgs.Create(dictionaryAssetName, dependencyAssetName, loadedCount, totalCount, loadDictionaryInfo.UserData);
+                m_LoadDictionaryDependencyAssetEventHandler(this, loadDictionaryDependencyAssetEventArgs);
+                ReferencePool.Release(loadDictionaryDependencyAssetEventArgs);
             }
         }
     }

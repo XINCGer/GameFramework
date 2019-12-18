@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 using GameFramework.ObjectPool;
@@ -18,12 +18,15 @@ namespace GameFramework.Resource
         /// </summary>
         private sealed partial class ResourceLoader
         {
+            private const int CachedHashBytesLength = 4;
+
             private readonly ResourceManager m_ResourceManager;
             private readonly TaskPool<LoadResourceTaskBase> m_TaskPool;
             private readonly Dictionary<object, int> m_AssetDependencyCount;
             private readonly Dictionary<object, int> m_ResourceDependencyCount;
             private readonly Dictionary<object, object> m_AssetToResourceMap;
             private readonly Dictionary<string, object> m_SceneToAssetMap;
+            private readonly byte[] m_CachedHashBytes;
             private IObjectPool<AssetObject> m_AssetPool;
             private IObjectPool<ResourceObject> m_ResourcePool;
 
@@ -39,6 +42,7 @@ namespace GameFramework.Resource
                 m_ResourceDependencyCount = new Dictionary<object, int>();
                 m_AssetToResourceMap = new Dictionary<object, object>();
                 m_SceneToAssetMap = new Dictionary<string, object>();
+                m_CachedHashBytes = new byte[CachedHashBytesLength];
                 m_AssetPool = null;
                 m_ResourcePool = null;
             }
@@ -227,6 +231,7 @@ namespace GameFramework.Resource
                 m_ResourceDependencyCount.Clear();
                 m_AssetToResourceMap.Clear();
                 m_SceneToAssetMap.Clear();
+                LoadResourceAgent.Clear();
             }
 
             /// <summary>
@@ -298,7 +303,7 @@ namespace GameFramework.Resource
                     throw new GameFrameworkException(errorMessage);
                 }
 
-                LoadAssetTask mainTask = new LoadAssetTask(assetName, assetType, priority, resourceInfo.Value, dependencyAssetNames, loadAssetCallbacks, userData);
+                LoadAssetTask mainTask = LoadAssetTask.Create(assetName, assetType, priority, resourceInfo.Value, dependencyAssetNames, loadAssetCallbacks, userData);
                 foreach (string dependencyAssetName in dependencyAssetNames)
                 {
                     if (!LoadDependencyAsset(dependencyAssetName, priority, mainTask, userData))
@@ -350,7 +355,7 @@ namespace GameFramework.Resource
                     throw new GameFrameworkException(errorMessage);
                 }
 
-                LoadSceneTask mainTask = new LoadSceneTask(sceneAssetName, priority, resourceInfo.Value, dependencyAssetNames, loadSceneCallbacks, userData);
+                LoadSceneTask mainTask = LoadSceneTask.Create(sceneAssetName, priority, resourceInfo.Value, dependencyAssetNames, loadSceneCallbacks, userData);
                 foreach (string dependencyAssetName in dependencyAssetNames)
                 {
                     if (!LoadDependencyAsset(dependencyAssetName, priority, mainTask, userData))
@@ -396,6 +401,15 @@ namespace GameFramework.Resource
                 m_ResourceManager.m_ResourceHelper.UnloadScene(sceneAssetName, unloadSceneCallbacks, userData);
             }
 
+            /// <summary>
+            /// 获取所有加载资源任务的信息。
+            /// </summary>
+            /// <returns>所有加载资源任务的信息。</returns>
+            public TaskInfo[] GetAllLoadAssetInfos()
+            {
+                return m_TaskPool.GetAllTaskInfos();
+            }
+
             private bool LoadDependencyAsset(string assetName, int priority, LoadResourceTaskBase mainTask, object userData)
             {
                 if (mainTask == null)
@@ -408,16 +422,14 @@ namespace GameFramework.Resource
 
                 if (!CheckAsset(assetName, out resourceInfo, out dependencyAssetNames))
                 {
-                    GameFrameworkLog.Debug("Can not load asset '{0}'.", assetName);
                     return false;
                 }
 
-                LoadDependencyAssetTask dependencyTask = new LoadDependencyAssetTask(assetName, priority, resourceInfo.Value, dependencyAssetNames, mainTask, userData);
+                LoadDependencyAssetTask dependencyTask = LoadDependencyAssetTask.Create(assetName, priority, resourceInfo.Value, dependencyAssetNames, mainTask, userData);
                 foreach (string dependencyAssetName in dependencyAssetNames)
                 {
                     if (!LoadDependencyAsset(dependencyAssetName, priority, dependencyTask, userData))
                     {
-                        GameFrameworkLog.Debug("Can not load dependency asset '{0}' when load dependency asset '{1}'.", dependencyAssetName, assetName);
                         return false;
                     }
                 }
@@ -458,9 +470,17 @@ namespace GameFramework.Resource
                 switch ((LoadType)loadType)
                 {
                     case LoadType.LoadFromMemoryAndQuickDecrypt:
-                        return Utility.Encryption.GetQuickSelfXorBytes(bytes, Utility.Converter.GetBytes(hashCode));
+                        Utility.Converter.GetBytes(hashCode, m_CachedHashBytes);
+                        Utility.Encryption.GetQuickSelfXorBytes(bytes, m_CachedHashBytes);
+                        Array.Clear(m_CachedHashBytes, 0, CachedHashBytesLength);
+                        return bytes;
+
                     case LoadType.LoadFromMemoryAndDecrypt:
-                        return Utility.Encryption.GetSelfXorBytes(bytes, Utility.Converter.GetBytes(hashCode));
+                        Utility.Converter.GetBytes(hashCode, m_CachedHashBytes);
+                        Utility.Encryption.GetSelfXorBytes(bytes, m_CachedHashBytes);
+                        Array.Clear(m_CachedHashBytes, 0, CachedHashBytesLength);
+                        return bytes;
+
                     default:
                         return bytes;
                 }

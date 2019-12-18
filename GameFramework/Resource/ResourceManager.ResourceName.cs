@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 using System;
@@ -88,27 +88,27 @@ namespace GameFramework.Resource
                     return m_Name.GetHashCode();
                 }
 
-                return (m_Name.GetHashCode() ^ m_Variant.GetHashCode());
+                return m_Name.GetHashCode() ^ m_Variant.GetHashCode();
             }
 
-            public override bool Equals(object value)
+            public override bool Equals(object obj)
             {
-                return (value is ResourceName) && (this == (ResourceName)value);
+                return (obj is ResourceName) && Equals((ResourceName)obj);
             }
 
-            public bool Equals(ResourceName resourceName)
+            public bool Equals(ResourceName value)
             {
-                return (this == resourceName);
+                return m_Name == value.m_Name && m_Variant == value.m_Variant;
             }
 
-            public static bool operator ==(ResourceName resourceName1, ResourceName resourceName2)
+            public static bool operator ==(ResourceName a, ResourceName b)
             {
-                return resourceName1.CompareTo(resourceName2) == 0;
+                return a.Equals(b);
             }
 
-            public static bool operator !=(ResourceName resourceName1, ResourceName resourceName2)
+            public static bool operator !=(ResourceName a, ResourceName b)
             {
-                return resourceName1.CompareTo(resourceName2) != 0;
+                return !(a == b);
             }
 
             public int CompareTo(object value)

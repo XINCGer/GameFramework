@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 using GameFramework.Resource;
@@ -292,5 +292,20 @@ namespace GameFramework.DataTable
         /// <param name="name">数据表名称。</param>
         /// <returns>是否销毁数据表成功。</returns>
         bool DestroyDataTable(Type dataRowType, string name);
+
+        /// <summary>
+        /// 销毁数据表。
+        /// </summary>
+        /// <typeparam name="T">数据表行的类型。</typeparam>
+        /// <param name="dataTable">要销毁的数据表。</param>
+        /// <returns>是否销毁数据表成功。</returns>
+        bool DestroyDataTable<T>(IDataTable<T> dataTable) where T : IDataRow;
+
+        /// <summary>
+        /// 销毁数据表。
+        /// </summary>
+        /// <param name="dataTable">要销毁的数据表。</param>
+        /// <returns>是否销毁数据表成功。</returns>
+        bool DestroyDataTable(DataTableBase dataTable);
     }
 }

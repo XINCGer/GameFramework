@@ -1,23 +1,23 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 namespace GameFramework.Localization
 {
     internal sealed partial class LocalizationManager : GameFrameworkModule, ILocalizationManager
     {
-        private sealed class LoadDictionaryInfo
+        private sealed class LoadDictionaryInfo : IReference
         {
-            private readonly LoadType m_LoadType;
-            private readonly object m_UserData;
+            private LoadType m_LoadType;
+            private object m_UserData;
 
-            public LoadDictionaryInfo(LoadType loadType, object userData)
+            public LoadDictionaryInfo()
             {
-                m_LoadType = loadType;
-                m_UserData = userData;
+                m_LoadType = LoadType.Text;
+                m_UserData = null;
             }
 
             public LoadType LoadType
@@ -34,6 +34,20 @@ namespace GameFramework.Localization
                 {
                     return m_UserData;
                 }
+            }
+
+            public static LoadDictionaryInfo Create(LoadType loadType, object userData)
+            {
+                LoadDictionaryInfo loadDictionaryInfo = ReferencePool.Acquire<LoadDictionaryInfo>();
+                loadDictionaryInfo.m_LoadType = loadType;
+                loadDictionaryInfo.m_UserData = userData;
+                return loadDictionaryInfo;
+            }
+
+            public void Clear()
+            {
+                m_LoadType = LoadType.Text;
+                m_UserData = null;
             }
         }
     }

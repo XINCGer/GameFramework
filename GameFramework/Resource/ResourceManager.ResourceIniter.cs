@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 using System;
@@ -19,7 +19,10 @@ namespace GameFramework.Resource
         /// </summary>
         private sealed class ResourceIniter
         {
+            private const int CachedHashBytesLength = 4;
+
             private readonly ResourceManager m_ResourceManager;
+            private readonly byte[] m_CachedHashBytes;
             private string m_CurrentVariant;
 
             public GameFrameworkAction ResourceInitComplete;
@@ -31,6 +34,7 @@ namespace GameFramework.Resource
             public ResourceIniter(ResourceManager resourceManager)
             {
                 m_ResourceManager = resourceManager;
+                m_CachedHashBytes = new byte[CachedHashBytesLength];
                 m_CurrentVariant = null;
 
                 ResourceInitComplete = null;
@@ -41,7 +45,6 @@ namespace GameFramework.Resource
             /// </summary>
             public void Shutdown()
             {
-
             }
 
             /// <summary>
@@ -56,7 +59,12 @@ namespace GameFramework.Resource
                     throw new GameFrameworkException("Resource helper is invalid.");
                 }
 
-                m_ResourceManager.m_ResourceHelper.LoadBytes(Utility.Path.GetRemotePath(m_ResourceManager.m_ReadOnlyPath, Utility.Path.GetResourceNameWithSuffix(VersionListFileName)), ParsePackageList);
+                if (string.IsNullOrEmpty(m_ResourceManager.m_ReadOnlyPath))
+                {
+                    throw new GameFrameworkException("Readonly path is invalid.");
+                }
+
+                m_ResourceManager.m_ResourceHelper.LoadBytes(Utility.Path.GetRemotePath(Path.Combine(m_ResourceManager.m_ReadOnlyPath, Utility.Path.GetResourceNameWithSuffix(VersionListFileName))), ParsePackageList);
             }
 
             /// <summary>
@@ -97,6 +105,7 @@ namespace GameFramework.Resource
                             m_ResourceManager.m_AssetInfos = new Dictionary<string, AssetInfo>(assetCount);
                             int resourceCount = binaryReader.ReadInt32();
                             m_ResourceManager.m_ResourceInfos = new Dictionary<ResourceName, ResourceInfo>(resourceCount, new ResourceNameComparer());
+                            ResourceLength[] resourceLengths = new ResourceLength[resourceCount];
 
                             for (int i = 0; i < resourceCount; i++)
                             {
@@ -107,18 +116,19 @@ namespace GameFramework.Resource
                                 LoadType loadType = (LoadType)binaryReader.ReadByte();
                                 int length = binaryReader.ReadInt32();
                                 int hashCode = binaryReader.ReadInt32();
-                                byte[] hashCodeBytes = Utility.Converter.GetBytes(hashCode);
+                                Utility.Converter.GetBytes(hashCode, m_CachedHashBytes);
+                                resourceLengths[i] = new ResourceLength(resourceName, length, length);
 
                                 int assetNamesCount = binaryReader.ReadInt32();
                                 for (int j = 0; j < assetNamesCount; j++)
                                 {
-                                    string assetName = m_ResourceManager.GetEncryptedString(binaryReader, hashCodeBytes);
+                                    string assetName = m_ResourceManager.GetEncryptedString(binaryReader, m_CachedHashBytes);
 
                                     int dependencyAssetNamesCount = binaryReader.ReadInt32();
                                     string[] dependencyAssetNames = new string[dependencyAssetNamesCount];
                                     for (int k = 0; k < dependencyAssetNamesCount; k++)
                                     {
-                                        dependencyAssetNames[k] = m_ResourceManager.GetEncryptedString(binaryReader, hashCodeBytes);
+                                        dependencyAssetNames[k] = m_ResourceManager.GetEncryptedString(binaryReader, m_CachedHashBytes);
                                     }
 
                                     if (variant == null || variant == m_CurrentVariant)
@@ -130,6 +140,38 @@ namespace GameFramework.Resource
                                 if (variant == null || variant == m_CurrentVariant)
                                 {
                                     ProcessResourceInfo(resourceName, loadType, length, hashCode);
+                                }
+                            }
+
+                            Array.Clear(m_CachedHashBytes, 0, CachedHashBytesLength);
+
+                            ResourceGroup defaultResourceGroup = m_ResourceManager.GetOrAddResourceGroup(string.Empty);
+                            for (int i = 0; i < resourceCount; i++)
+                            {
+                                if (resourceLengths[i].ResourceName.Variant == null || resourceLengths[i].ResourceName.Variant == m_CurrentVariant)
+                                {
+                                    defaultResourceGroup.AddResource(resourceLengths[i].ResourceName, resourceLengths[i].Length, resourceLengths[i].ZipLength);
+                                }
+                            }
+
+                            int resourceGroupCount = binaryReader.ReadInt32();
+                            for (int i = 0; i < resourceGroupCount; i++)
+                            {
+                                string resourceGroupName = m_ResourceManager.GetEncryptedString(binaryReader, encryptBytes);
+                                ResourceGroup resourceGroup = m_ResourceManager.GetOrAddResourceGroup(resourceGroupName);
+                                int resourceGroupResourceCount = binaryReader.ReadInt32();
+                                for (int j = 0; j < resourceGroupResourceCount; j++)
+                                {
+                                    ushort index = binaryReader.ReadUInt16();
+                                    if (index >= resourceCount)
+                                    {
+                                        throw new GameFrameworkException(Utility.Text.Format("Package index '{0}' is invalid, resource count is '{1}'.", index.ToString(), resourceCount.ToString()));
+                                    }
+
+                                    if (resourceLengths[index].ResourceName.Variant == null || resourceLengths[index].ResourceName.Variant == m_CurrentVariant)
+                                    {
+                                        resourceGroup.AddResource(resourceLengths[index].ResourceName, resourceLengths[index].Length, resourceLengths[index].ZipLength);
+                                    }
                                 }
                             }
                         }
@@ -148,7 +190,7 @@ namespace GameFramework.Resource
                         throw;
                     }
 
-                    throw new GameFrameworkException(Utility.Text.Format("Parse package list exception '{0}'.", exception.Message), exception);
+                    throw new GameFrameworkException(Utility.Text.Format("Parse package list exception '{0}'.", exception.ToString()), exception);
                 }
                 finally
                 {

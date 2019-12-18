@@ -1,12 +1,13 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace GameFramework.Resource
 {
@@ -19,6 +20,7 @@ namespace GameFramework.Resource
             /// </summary>
             private sealed partial class LoadResourceAgent : ITaskAgent<LoadResourceTaskBase>
             {
+                private static readonly Dictionary<string, string> s_CachedResourceNames = new Dictionary<string, string>();
                 private static readonly HashSet<string> s_LoadingAssetNames = new HashSet<string>();
                 private static readonly HashSet<string> s_LoadingResourceNames = new HashSet<string>();
 
@@ -28,11 +30,7 @@ namespace GameFramework.Resource
                 private readonly string m_ReadOnlyPath;
                 private readonly string m_ReadWritePath;
                 private readonly DecryptResourceCallback m_DecryptResourceCallback;
-                private readonly LinkedList<string> m_LoadingDependencyAssetNames;
                 private LoadResourceTaskBase m_Task;
-                private WaitingType m_WaitingType;
-                private bool m_LoadingAsset;
-                private bool m_LoadingResource;
 
                 /// <summary>
                 /// 初始化加载资源代理的新实例。
@@ -71,11 +69,7 @@ namespace GameFramework.Resource
                     m_ReadOnlyPath = readOnlyPath;
                     m_ReadWritePath = readWritePath;
                     m_DecryptResourceCallback = decryptResourceCallback;
-                    m_LoadingDependencyAssetNames = new LinkedList<string>();
                     m_Task = null;
-                    m_WaitingType = WaitingType.None;
-                    m_LoadingAsset = false;
-                    m_LoadingResource = false;
                 }
 
                 public ILoadResourceAgentHelper Helper
@@ -117,80 +111,6 @@ namespace GameFramework.Resource
                 /// <param name="realElapseSeconds">真实流逝时间，以秒为单位。</param>
                 public void Update(float elapseSeconds, float realElapseSeconds)
                 {
-                    if (m_WaitingType == WaitingType.None)
-                    {
-                        return;
-                    }
-
-                    if (m_WaitingType == WaitingType.WaitForAsset)
-                    {
-                        if (IsAssetLoading(m_Task.AssetName))
-                        {
-                            return;
-                        }
-
-                        m_WaitingType = WaitingType.None;
-                        AssetObject assetObject = m_ResourceLoader.m_AssetPool.Spawn(m_Task.AssetName);
-                        if (assetObject == null)
-                        {
-                            TryLoadAsset();
-                            return;
-                        }
-
-                        OnAssetObjectReady(assetObject);
-                        return;
-                    }
-
-                    if (m_WaitingType == WaitingType.WaitForDependencyAsset)
-                    {
-                        LinkedListNode<string> current = m_LoadingDependencyAssetNames.First;
-                        while (current != null)
-                        {
-                            if (!IsAssetLoading(current.Value))
-                            {
-                                LinkedListNode<string> next = current.Next;
-                                if (!m_ResourceLoader.m_AssetPool.CanSpawn(current.Value))
-                                {
-                                    OnError(LoadResourceStatus.DependencyError, Utility.Text.Format("Can not find dependency asset object named '{0}'.", current.Value));
-                                    return;
-                                }
-
-                                m_LoadingDependencyAssetNames.Remove(current);
-                                current = next;
-                                continue;
-                            }
-
-                            current = current.Next;
-                        }
-
-                        if (m_LoadingDependencyAssetNames.Count > 0)
-                        {
-                            return;
-                        }
-
-                        m_WaitingType = WaitingType.None;
-                        OnDependencyAssetReady();
-                        return;
-                    }
-
-                    if (m_WaitingType == WaitingType.WaitForResource)
-                    {
-                        if (IsResourceLoading(m_Task.ResourceInfo.ResourceName.Name))
-                        {
-                            return;
-                        }
-
-                        ResourceObject resourceObject = m_ResourceLoader.m_ResourcePool.Spawn(m_Task.ResourceInfo.ResourceName.Name);
-                        if (resourceObject == null)
-                        {
-                            OnError(LoadResourceStatus.DependencyError, Utility.Text.Format("Can not find resource object named '{0}'.", m_Task.ResourceInfo.ResourceName.Name));
-                            return;
-                        }
-
-                        m_WaitingType = WaitingType.None;
-                        OnResourceObjectReady(resourceObject);
-                        return;
-                    }
                 }
 
                 /// <summary>
@@ -207,11 +127,19 @@ namespace GameFramework.Resource
                     m_Helper.LoadResourceAgentHelperError -= OnLoadResourceAgentHelperError;
                 }
 
+                public static void Clear()
+                {
+                    s_CachedResourceNames.Clear();
+                    s_LoadingAssetNames.Clear();
+                    s_LoadingResourceNames.Clear();
+                }
+
                 /// <summary>
                 /// 开始处理加载资源任务。
                 /// </summary>
                 /// <param name="task">要处理的加载资源任务。</param>
-                public void Start(LoadResourceTaskBase task)
+                /// <returns>开始处理任务的状态。</returns>
+                public StartTaskStatus Start(LoadResourceTaskBase task)
                 {
                     if (task == null)
                     {
@@ -223,11 +151,64 @@ namespace GameFramework.Resource
 
                     if (IsAssetLoading(m_Task.AssetName))
                     {
-                        m_WaitingType = WaitingType.WaitForAsset;
-                        return;
+                        m_Task.StartTime = default(DateTime);
+                        return StartTaskStatus.HasToWait;
                     }
 
-                    TryLoadAsset();
+                    if (!m_Task.IsScene)
+                    {
+                        AssetObject assetObject = m_ResourceLoader.m_AssetPool.Spawn(m_Task.AssetName);
+                        if (assetObject != null)
+                        {
+                            OnAssetObjectReady(assetObject);
+                            return StartTaskStatus.Done;
+                        }
+                    }
+
+                    foreach (string dependencyAssetName in m_Task.GetDependencyAssetNames())
+                    {
+                        if (!m_ResourceLoader.m_AssetPool.CanSpawn(dependencyAssetName))
+                        {
+                            m_Task.StartTime = default(DateTime);
+                            return StartTaskStatus.HasToWait;
+                        }
+                    }
+
+                    string resourceName = m_Task.ResourceInfo.ResourceName.Name;
+                    if (IsResourceLoading(resourceName))
+                    {
+                        m_Task.StartTime = default(DateTime);
+                        return StartTaskStatus.HasToWait;
+                    }
+
+                    s_LoadingAssetNames.Add(m_Task.AssetName);
+
+                    ResourceObject resourceObject = m_ResourceLoader.m_ResourcePool.Spawn(resourceName);
+                    if (resourceObject != null)
+                    {
+                        OnResourceObjectReady(resourceObject);
+                        return StartTaskStatus.CanResume;
+                    }
+
+                    s_LoadingResourceNames.Add(resourceName);
+
+                    string fullPath = null;
+                    if (!s_CachedResourceNames.TryGetValue(resourceName, out fullPath))
+                    {
+                        fullPath = Utility.Path.GetRegularPath(Path.Combine(m_Task.ResourceInfo.StorageInReadOnly ? m_ReadOnlyPath : m_ReadWritePath, Utility.Path.GetResourceNameWithSuffix(m_Task.ResourceInfo.ResourceName.FullName)));
+                        s_CachedResourceNames.Add(resourceName, fullPath);
+                    }
+
+                    if (m_Task.ResourceInfo.LoadType == LoadType.LoadFromFile)
+                    {
+                        m_Helper.ReadFile(fullPath);
+                    }
+                    else
+                    {
+                        m_Helper.ReadBytes(fullPath, (int)m_Task.ResourceInfo.LoadType);
+                    }
+
+                    return StartTaskStatus.CanResume;
                 }
 
                 /// <summary>
@@ -236,11 +217,7 @@ namespace GameFramework.Resource
                 public void Reset()
                 {
                     m_Helper.Reset();
-                    m_LoadingDependencyAssetNames.Clear();
                     m_Task = null;
-                    m_WaitingType = WaitingType.None;
-                    m_LoadingAsset = false;
-                    m_LoadingResource = false;
                 }
 
                 private static bool IsAssetLoading(string assetName)
@@ -251,44 +228,6 @@ namespace GameFramework.Resource
                 private static bool IsResourceLoading(string resourceName)
                 {
                     return s_LoadingResourceNames.Contains(resourceName);
-                }
-
-                private void TryLoadAsset()
-                {
-                    if (!m_Task.IsScene)
-                    {
-                        AssetObject assetObject = m_ResourceLoader.m_AssetPool.Spawn(m_Task.AssetName);
-                        if (assetObject != null)
-                        {
-                            OnAssetObjectReady(assetObject);
-                            return;
-                        }
-                    }
-
-                    m_LoadingAsset = true;
-                    s_LoadingAssetNames.Add(m_Task.AssetName);
-
-                    foreach (string dependencyAssetName in m_Task.GetDependencyAssetNames())
-                    {
-                        if (!m_ResourceLoader.m_AssetPool.CanSpawn(dependencyAssetName))
-                        {
-                            if (!IsAssetLoading(dependencyAssetName))
-                            {
-                                OnError(LoadResourceStatus.DependencyError, Utility.Text.Format("Can not find dependency asset object named '{0}'.", dependencyAssetName));
-                                return;
-                            }
-
-                            m_LoadingDependencyAssetNames.AddLast(dependencyAssetName);
-                        }
-                    }
-
-                    if (m_LoadingDependencyAssetNames.Count > 0)
-                    {
-                        m_WaitingType = WaitingType.WaitForDependencyAsset;
-                        return;
-                    }
-
-                    OnDependencyAssetReady();
                 }
 
                 private void OnAssetObjectReady(AssetObject assetObject)
@@ -305,35 +244,6 @@ namespace GameFramework.Resource
                     m_Task.Done = true;
                 }
 
-                private void OnDependencyAssetReady()
-                {
-                    if (IsResourceLoading(m_Task.ResourceInfo.ResourceName.Name))
-                    {
-                        m_WaitingType = WaitingType.WaitForResource;
-                        return;
-                    }
-
-                    ResourceObject resourceObject = m_ResourceLoader.m_ResourcePool.Spawn(m_Task.ResourceInfo.ResourceName.Name);
-                    if (resourceObject != null)
-                    {
-                        OnResourceObjectReady(resourceObject);
-                        return;
-                    }
-
-                    m_LoadingResource = true;
-                    s_LoadingResourceNames.Add(m_Task.ResourceInfo.ResourceName.Name);
-
-                    string fullPath = Utility.Path.GetCombinePath(m_Task.ResourceInfo.StorageInReadOnly ? m_ReadOnlyPath : m_ReadWritePath, Utility.Path.GetResourceNameWithSuffix(m_Task.ResourceInfo.ResourceName.FullName));
-                    if (m_Task.ResourceInfo.LoadType == LoadType.LoadFromFile)
-                    {
-                        m_Helper.ReadFile(fullPath);
-                    }
-                    else
-                    {
-                        m_Helper.ReadBytes(fullPath, (int)m_Task.ResourceInfo.LoadType);
-                    }
-                }
-
                 private void OnResourceObjectReady(ResourceObject resourceObject)
                 {
                     m_Task.LoadMain(this, resourceObject);
@@ -343,18 +253,8 @@ namespace GameFramework.Resource
                 {
                     m_Helper.Reset();
                     m_Task.OnLoadAssetFailure(this, status, errorMessage);
-                    if (m_LoadingAsset)
-                    {
-                        m_LoadingAsset = false;
-                        s_LoadingAssetNames.Remove(m_Task.AssetName);
-                    }
-
-                    if (m_LoadingResource)
-                    {
-                        m_LoadingResource = false;
-                        s_LoadingResourceNames.Remove(m_Task.ResourceInfo.ResourceName.Name);
-                    }
-
+                    s_LoadingAssetNames.Remove(m_Task.AssetName);
+                    s_LoadingResourceNames.Remove(m_Task.ResourceInfo.ResourceName.Name);
                     m_Task.Done = true;
                 }
 
@@ -365,9 +265,8 @@ namespace GameFramework.Resource
 
                 private void OnLoadResourceAgentHelperReadFileComplete(object sender, LoadResourceAgentHelperReadFileCompleteEventArgs e)
                 {
-                    ResourceObject resourceObject = new ResourceObject(m_Task.ResourceInfo.ResourceName.Name, e.Resource, m_ResourceHelper, m_ResourceLoader);
+                    ResourceObject resourceObject = ResourceObject.Create(m_Task.ResourceInfo.ResourceName.Name, e.Resource, m_ResourceHelper, m_ResourceLoader);
                     m_ResourceLoader.m_ResourcePool.Register(resourceObject, true);
-                    m_LoadingResource = false;
                     s_LoadingResourceNames.Remove(m_Task.ResourceInfo.ResourceName.Name);
                     OnResourceObjectReady(resourceObject);
                 }
@@ -386,9 +285,8 @@ namespace GameFramework.Resource
 
                 private void OnLoadResourceAgentHelperParseBytesComplete(object sender, LoadResourceAgentHelperParseBytesCompleteEventArgs e)
                 {
-                    ResourceObject resourceObject = new ResourceObject(m_Task.ResourceInfo.ResourceName.Name, e.Resource, m_ResourceHelper, m_ResourceLoader);
+                    ResourceObject resourceObject = ResourceObject.Create(m_Task.ResourceInfo.ResourceName.Name, e.Resource, m_ResourceHelper, m_ResourceLoader);
                     m_ResourceLoader.m_ResourcePool.Register(resourceObject, true);
-                    m_LoadingResource = false;
                     s_LoadingResourceNames.Remove(m_Task.ResourceInfo.ResourceName.Name);
                     OnResourceObjectReady(resourceObject);
                 }
@@ -403,8 +301,8 @@ namespace GameFramework.Resource
 
                     if (assetObject == null)
                     {
-                        object[] dependencyAssets = m_Task.GetDependencyAssets();
-                        assetObject = new AssetObject(m_Task.AssetName, e.Asset, dependencyAssets, m_Task.ResourceObject.Target, m_ResourceHelper, m_ResourceLoader);
+                        List<object> dependencyAssets = m_Task.GetDependencyAssets();
+                        assetObject = AssetObject.Create(m_Task.AssetName, e.Asset, dependencyAssets, m_Task.ResourceObject.Target, m_ResourceHelper, m_ResourceLoader);
                         m_ResourceLoader.m_AssetPool.Register(assetObject, true);
                         m_ResourceLoader.m_AssetToResourceMap.Add(e.Asset, m_Task.ResourceObject.Target);
                         foreach (object dependencyAsset in dependencyAssets)
@@ -421,7 +319,6 @@ namespace GameFramework.Resource
                         }
                     }
 
-                    m_LoadingAsset = false;
                     s_LoadingAssetNames.Remove(m_Task.AssetName);
                     OnAssetObjectReady(assetObject);
                 }

@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 namespace GameFramework
@@ -11,7 +11,7 @@ namespace GameFramework
     /// 任务代理接口。
     /// </summary>
     /// <typeparam name="T">任务类型。</typeparam>
-    internal interface ITaskAgent<T> where T : ITask
+    internal interface ITaskAgent<T> where T : TaskBase
     {
         /// <summary>
         /// 获取任务。
@@ -42,7 +42,8 @@ namespace GameFramework
         /// 开始处理任务。
         /// </summary>
         /// <param name="task">要处理的任务。</param>
-        void Start(T task);
+        /// <returns>开始处理任务的状态。</returns>
+        StartTaskStatus Start(T task);
 
         /// <summary>
         /// 停止正在处理的任务并重置任务代理。

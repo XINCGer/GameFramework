@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 using System;
@@ -16,7 +16,7 @@ namespace GameFramework
         /// </summary>
         internal static class Encryption
         {
-            private const int QuickEncryptLength = 220;
+            public const int QuickEncryptLength = 220;
 
             /// <summary>
             /// 将 bytes 使用 code 做异或运算的快速版本。
@@ -34,10 +34,9 @@ namespace GameFramework
             /// </summary>
             /// <param name="bytes">原始及异或后的二进制流。</param>
             /// <param name="code">异或二进制流。</param>
-            /// <returns>异或后的二进制流。</returns>
-            public static byte[] GetQuickSelfXorBytes(byte[] bytes, byte[] code)
+            public static void GetQuickSelfXorBytes(byte[] bytes, byte[] code)
             {
-                return GetSelfXorBytes(bytes, code, QuickEncryptLength);
+                GetSelfXorBytes(bytes, code, QuickEncryptLength);
             }
 
             /// <summary>
@@ -56,10 +55,9 @@ namespace GameFramework
             /// </summary>
             /// <param name="bytes">原始及异或后的二进制流。</param>
             /// <param name="code">异或二进制流。</param>
-            /// <returns>异或后的二进制流。</returns>
-            public static byte[] GetSelfXorBytes(byte[] bytes, byte[] code)
+            public static void GetSelfXorBytes(byte[] bytes, byte[] code)
             {
-                return GetSelfXorBytes(bytes, code, -1);
+                GetSelfXorBytes(bytes, code, -1);
             }
 
             /// <summary>
@@ -77,14 +75,10 @@ namespace GameFramework
                 }
 
                 int bytesLength = bytes.Length;
-                if (length < 0 || length > bytesLength)
-                {
-                    length = bytesLength;
-                }
-
                 byte[] results = new byte[bytesLength];
                 Buffer.BlockCopy(bytes, 0, results, 0, bytesLength);
-                return GetSelfXorBytes(results, code, length);
+                GetSelfXorBytes(results, code, length);
+                return results;
             }
 
             /// <summary>
@@ -93,12 +87,11 @@ namespace GameFramework
             /// <param name="bytes">原始及异或后的二进制流。</param>
             /// <param name="code">异或二进制流。</param>
             /// <param name="length">异或计算长度，若小于 0，则计算整个二进制流。</param>
-            /// <returns>异或后的二进制流。</returns>
-            public static byte[] GetSelfXorBytes(byte[] bytes, byte[] code, int length)
+            public static void GetSelfXorBytes(byte[] bytes, byte[] code, int length)
             {
                 if (bytes == null)
                 {
-                    return null;
+                    return;
                 }
 
                 if (code == null)
@@ -112,20 +105,18 @@ namespace GameFramework
                     throw new GameFrameworkException("Code length is invalid.");
                 }
 
-                int codeIndex = 0;
                 int bytesLength = bytes.Length;
                 if (length < 0 || length > bytesLength)
                 {
                     length = bytesLength;
                 }
 
+                int codeIndex = 0;
                 for (int i = 0; i < length; i++)
                 {
                     bytes[i] ^= code[codeIndex++];
-                    codeIndex = codeIndex % codeLength;
+                    codeIndex %= codeLength;
                 }
-
-                return bytes;
             }
         }
     }

@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 using System;
@@ -22,7 +22,6 @@ namespace GameFramework
         public GameFrameworkException()
             : base()
         {
-
         }
 
         /// <summary>
@@ -32,7 +31,6 @@ namespace GameFramework
         public GameFrameworkException(string message)
             : base(message)
         {
-
         }
 
         /// <summary>
@@ -43,7 +41,6 @@ namespace GameFramework
         public GameFrameworkException(string message, Exception innerException)
             : base(message, innerException)
         {
-
         }
 
         /// <summary>
@@ -54,7 +51,6 @@ namespace GameFramework
         protected GameFrameworkException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
-
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 using System;
@@ -23,7 +23,6 @@ namespace GameFramework.DataTable
         public DataTableBase()
             : this(null)
         {
-
         }
 
         /// <summary>
@@ -43,6 +42,17 @@ namespace GameFramework.DataTable
             get
             {
                 return m_Name;
+            }
+        }
+
+        /// <summary>
+        /// 获取数据表完整名称。
+        /// </summary>
+        public string FullName
+        {
+            get
+            {
+                return new TypeNamePair(Type, m_Name).ToString();
             }
         }
 

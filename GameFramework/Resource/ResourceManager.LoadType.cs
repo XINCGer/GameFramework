@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 namespace GameFramework.Resource
@@ -32,7 +32,7 @@ namespace GameFramework.Resource
             /// <summary>
             /// 从内存解密加载。
             /// </summary>
-            LoadFromMemoryAndDecrypt,
+            LoadFromMemoryAndDecrypt
         }
     }
 }

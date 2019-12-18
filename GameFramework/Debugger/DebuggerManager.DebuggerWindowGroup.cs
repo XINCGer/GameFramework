@@ -1,8 +1,8 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ namespace GameFramework.Debugger
     internal sealed partial class DebuggerManager : GameFrameworkModule, IDebuggerManager
     {
         /// <summary>
-        /// 调试窗口组。
+        /// 调试器窗口组。
         /// </summary>
         private sealed class DebuggerWindowGroup : IDebuggerWindowGroup
         {
@@ -28,7 +28,7 @@ namespace GameFramework.Debugger
             }
 
             /// <summary>
-            /// 获取调试窗口数量。
+            /// 获取调试器窗口数量。
             /// </summary>
             public int DebuggerWindowCount
             {
@@ -39,7 +39,7 @@ namespace GameFramework.Debugger
             }
 
             /// <summary>
-            /// 获取或设置当前选中的调试窗口索引。
+            /// 获取或设置当前选中的调试器窗口索引。
             /// </summary>
             public int SelectedIndex
             {
@@ -54,7 +54,7 @@ namespace GameFramework.Debugger
             }
 
             /// <summary>
-            /// 获取当前选中的调试窗口。
+            /// 获取当前选中的调试器窗口。
             /// </summary>
             public IDebuggerWindow SelectedWindow
             {
@@ -75,7 +75,6 @@ namespace GameFramework.Debugger
             /// <param name="args">初始化调试组参数。</param>
             public void Initialize(params object[] args)
             {
-
             }
 
             /// <summary>
@@ -92,7 +91,7 @@ namespace GameFramework.Debugger
             }
 
             /// <summary>
-            /// 进入调试窗口。
+            /// 进入调试器窗口。
             /// </summary>
             public void OnEnter()
             {
@@ -100,7 +99,7 @@ namespace GameFramework.Debugger
             }
 
             /// <summary>
-            /// 离开调试窗口。
+            /// 离开调试器窗口。
             /// </summary>
             public void OnLeave()
             {
@@ -118,11 +117,10 @@ namespace GameFramework.Debugger
             }
 
             /// <summary>
-            /// 调试窗口绘制。
+            /// 调试器窗口绘制。
             /// </summary>
             public void OnDraw()
             {
-
             }
 
             private void RefreshDebuggerWindowNames()
@@ -136,7 +134,7 @@ namespace GameFramework.Debugger
             }
 
             /// <summary>
-            /// 获取调试组的调试窗口名称集合。
+            /// 获取调试组的调试器窗口名称集合。
             /// </summary>
             public string[] GetDebuggerWindowNames()
             {
@@ -144,10 +142,10 @@ namespace GameFramework.Debugger
             }
 
             /// <summary>
-            /// 获取调试窗口。
+            /// 获取调试器窗口。
             /// </summary>
-            /// <param name="path">调试窗口路径。</param>
-            /// <returns>要获取的调试窗口。</returns>
+            /// <param name="path">调试器窗口路径。</param>
+            /// <returns>要获取的调试器窗口。</returns>
             public IDebuggerWindow GetDebuggerWindow(string path)
             {
                 if (string.IsNullOrEmpty(path))
@@ -173,10 +171,10 @@ namespace GameFramework.Debugger
             }
 
             /// <summary>
-            /// 选中调试窗口。
+            /// 选中调试器窗口。
             /// </summary>
-            /// <param name="path">调试窗口路径。</param>
-            /// <returns>是否成功选中调试窗口。</returns>
+            /// <param name="path">调试器窗口路径。</param>
+            /// <returns>是否成功选中调试器窗口。</returns>
             public bool SelectDebuggerWindow(string path)
             {
                 if (string.IsNullOrEmpty(path))
@@ -202,10 +200,10 @@ namespace GameFramework.Debugger
             }
 
             /// <summary>
-            /// 注册调试窗口。
+            /// 注册调试器窗口。
             /// </summary>
-            /// <param name="path">调试窗口路径。</param>
-            /// <param name="debuggerWindow">要注册的调试窗口。</param>
+            /// <param name="path">调试器窗口路径。</param>
+            /// <param name="debuggerWindow">要注册的调试器窗口。</param>
             public void RegisterDebuggerWindow(string path, IDebuggerWindow debuggerWindow)
             {
                 if (string.IsNullOrEmpty(path))

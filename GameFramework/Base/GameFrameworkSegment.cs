@@ -1,9 +1,11 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
+
+using System;
 
 namespace GameFramework
 {
@@ -11,7 +13,7 @@ namespace GameFramework
     /// 数据片段。
     /// </summary>
     /// <typeparam name="T">数据源类型。</typeparam>
-    public struct GameFrameworkSegment<T> where T : class
+    public struct GameFrameworkSegment<T> : IEquatable<GameFrameworkSegment<T>> where T : class
     {
         private readonly T m_Source;
         private readonly int m_Offset;
@@ -100,11 +102,11 @@ namespace GameFramework
         /// <summary>
         /// 比较对象是否与自身相等。
         /// </summary>
-        /// <param name="obj">要比较的对象。</param>
+        /// <param name="value">要比较的对象。</param>
         /// <returns>被比较的对象是否与自身相等。</returns>
-        public bool Equals(GameFrameworkSegment<T> obj)
+        public bool Equals(GameFrameworkSegment<T> value)
         {
-            return obj.m_Source == m_Source && obj.m_Offset == m_Offset && obj.m_Length == m_Length;
+            return value.m_Source == m_Source && value.m_Offset == m_Offset && value.m_Length == m_Length;
         }
 
         /// <summary>

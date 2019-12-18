@@ -1,16 +1,16 @@
 ﻿//------------------------------------------------------------
 // Game Framework
-// Copyright © 2013-2019 Jiang Yin. All rights reserved.
-// Homepage: http://gameframework.cn/
-// Feedback: mailto:jiangyin@gameframework.cn
+// Copyright © 2013-2020 Jiang Yin. All rights reserved.
+// Homepage: https://gameframework.cn/
+// Feedback: mailto:ellan@gameframework.cn
 //------------------------------------------------------------
 
 namespace GameFramework.Network
 {
     /// <summary>
-    /// 网络类型。
+    /// 网络地址类型。
     /// </summary>
-    public enum NetworkType
+    public enum AddressFamily
     {
         /// <summary>
         /// 未知。
@@ -25,6 +25,6 @@ namespace GameFramework.Network
         /// <summary>
         /// IP 版本 6。
         /// </summary>
-        IPv6,
+        IPv6
     }
 }
