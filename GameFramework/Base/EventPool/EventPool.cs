@@ -150,11 +150,11 @@ namespace GameFramework
             {
                 m_EventHandlers.Add(id, handler);
             }
-            else if ((m_EventPoolMode & EventPoolMode.AllowMultiHandler) == 0)
+            else if ((m_EventPoolMode & EventPoolMode.AllowMultiHandler) != EventPoolMode.AllowMultiHandler)
             {
                 throw new GameFrameworkException(Utility.Text.Format("Event '{0}' not allow multi handler.", id.ToString()));
             }
-            else if ((m_EventPoolMode & EventPoolMode.AllowDuplicateHandler) == 0 && Check(id, handler))
+            else if ((m_EventPoolMode & EventPoolMode.AllowDuplicateHandler) != EventPoolMode.AllowDuplicateHandler && Check(id, handler))
             {
                 throw new GameFrameworkException(Utility.Text.Format("Event '{0}' not allow duplicate handler.", id.ToString()));
             }
@@ -219,6 +219,11 @@ namespace GameFramework
         /// <param name="e">事件参数。</param>
         public void Fire(object sender, T e)
         {
+            if (e == null)
+            {
+                throw new GameFrameworkException("Event is invalid.");
+            }
+
             Event eventNode = Event.Create(sender, e);
             lock (m_Events)
             {
@@ -233,6 +238,11 @@ namespace GameFramework
         /// <param name="e">事件参数。</param>
         public void FireNow(object sender, T e)
         {
+            if (e == null)
+            {
+                throw new GameFrameworkException("Event is invalid.");
+            }
+
             HandleEvent(sender, e);
         }
 

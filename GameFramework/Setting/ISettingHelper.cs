@@ -6,6 +6,7 @@
 //------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 
 namespace GameFramework.Setting
 {
@@ -14,6 +15,14 @@ namespace GameFramework.Setting
     /// </summary>
     public interface ISettingHelper
     {
+        /// <summary>
+        /// 获取游戏配置项数量。
+        /// </summary>
+        int Count
+        {
+            get;
+        }
+
         /// <summary>
         /// 加载游戏配置。
         /// </summary>
@@ -27,6 +36,18 @@ namespace GameFramework.Setting
         bool Save();
 
         /// <summary>
+        /// 获取所有游戏配置项的名称。
+        /// </summary>
+        /// <returns>所有游戏配置项的名称。</returns>
+        string[] GetAllSettingNames();
+
+        /// <summary>
+        /// 获取所有游戏配置项的名称。
+        /// </summary>
+        /// <param name="results">所有游戏配置项的名称。</param>
+        void GetAllSettingNames(List<string> results);
+
+        /// <summary>
         /// 检查是否存在指定游戏配置项。
         /// </summary>
         /// <param name="settingName">要检查游戏配置项的名称。</param>
@@ -37,7 +58,8 @@ namespace GameFramework.Setting
         /// 移除指定游戏配置项。
         /// </summary>
         /// <param name="settingName">要移除游戏配置项的名称。</param>
-        void RemoveSetting(string settingName);
+        /// <returns>是否移除指定游戏配置项成功。</returns>
+        bool RemoveSetting(string settingName);
 
         /// <summary>
         /// 清空所有游戏配置项。

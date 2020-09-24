@@ -10,7 +10,7 @@ namespace GameFramework.Resource
     /// <summary>
     /// 加载资源状态。
     /// </summary>
-    public enum LoadResourceStatus
+    public enum LoadResourceStatus : byte
     {
         /// <summary>
         /// 加载资源完成。
@@ -18,14 +18,14 @@ namespace GameFramework.Resource
         Success = 0,
 
         /// <summary>
+        /// 资源不存在。
+        /// </summary>
+        NotExist,
+
+        /// <summary>
         /// 资源尚未准备完毕。
         /// </summary>
         NotReady,
-
-        /// <summary>
-        /// 资源不存在于磁盘上。
-        /// </summary>
-        NotExist,
 
         /// <summary>
         /// 依赖资源错误。
